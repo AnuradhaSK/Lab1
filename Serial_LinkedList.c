@@ -3,7 +3,7 @@
 #include <time.h>
 #include <math.h>
 
-#define MAX_VALUE 65535 /* Linked list has values between 0 & 2^16-1 */
+#define MAX_VALUE 65536 /* Linked list has values between 0 & 2^16-1 */
 
 /* Variable initialization */
 int n = 0; /* Number of nodes */
@@ -19,15 +19,19 @@ struct list_node_s {
     struct list_node_s *next;
 };
 
-int Insert(int value, struct list_node_s **head_p);
+int Insert(int value, struct list_node_s **head_pp);
 
 int Member(int value, struct list_node_s *head_p);
 
-int Delete(int value, struct list_node_s **head_p);
+int Delete(int value, struct list_node_s **head_pp);
 
 void vaildateInput(int argc, char *argv[]);
 
 double execution();
+
+void Free_list(struct list_node_s** head_pp);
+
+int  Is_empty(struct list_node_s* head_p);
 
 int main(int argc, char *argv[]) {
 
@@ -51,13 +55,18 @@ double execution() {
     struct list_node_s *head_p = NULL;  /* start with empty list */
 
     /* Create linked list*/
-    for (int i = 0; i < n; i++) {
-        Insert(rand() % MAX_VALUE, &head_p);
+    int count = 0;
+    while (count < n) {
+//        int val =rand()%MAX_VALUE;
+//        printf("%d%s",val,"\n");
+        int status = Insert(rand()%MAX_VALUE, &head_p);
+        if(status == 1) {
+            count++;
+        }
     }
 
     int total = 0, member_count = 0, insert_count = 0, delete_count = 0;
     int m_member = 0, m_insert = 0, m_delete = 0;
-//    struct timeval time_begin, time_end;
 
     m_member = m * m_member_fraction;
     m_insert = m * m_insert_fraction;
@@ -67,19 +76,23 @@ double execution() {
     clock_t start_time = clock();
 
     /* Execute m operations */
+//    printf("Selecting operations \n");
     while (total < m) {
         int random_value = rand() % MAX_VALUE;
         int random_selection = rand() % 3;
-
+//        printf("%d%s",random_selection,"\n");
         if (random_selection == 0 && member_count < m_member) {
             Member(random_value, head_p);
             member_count++;
+//            printf("member count %d \n",member_count);
         } else if (random_selection == 1 && insert_count < m_insert) {
             Insert(random_value, &head_p);
             insert_count++;
+//            printf("insert count %d \n",insert_count);
         } else if (random_selection == 2 && delete_count < m_delete) {
             Delete(random_value, &head_p);
             delete_count++;
+//            printf("delete count %d \n", delete_count);
         }
         total = member_count + insert_count + delete_count;
     }
@@ -88,6 +101,7 @@ double execution() {
 
     double cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
     printf("Time spent: %.5f secs\n", cpu_time_used);
+    Free_list(&head_p);
 
     return cpu_time_used;
 }
@@ -96,7 +110,7 @@ void vaildateInput(int argc, char *argv[]) {
 
     if (argc != 6) {
         fprintf(stderr,
-                "Usage: ./Serial_LinkedList <n> <m> <m_member_fraction> <m_insert_fraction> <m_delete_fraction>\n");
+                "Usage: ./<executable_name> <n> <m> <m_member_fraction> <m_insert_fraction> <m_delete_fraction>\n");
         exit(0);
     }
 
@@ -121,8 +135,36 @@ void vaildateInput(int argc, char *argv[]) {
 
 }
 
+void Free_list(struct list_node_s** head_pp) {
+    struct list_node_s* curr_p;
+    struct list_node_s* succ_p;
+
+    if (Is_empty(*head_pp)) return;
+    curr_p = *head_pp;
+    succ_p = curr_p->next;
+    while (succ_p != NULL) {
+//        printf("Freeing %d\n", curr_p->data);
+        free(curr_p);
+        curr_p = succ_p;
+        succ_p = curr_p->next;
+    }
+//    printf("Freeing %d\n", curr_p->data);
+    free(curr_p);
+    *head_pp = NULL;
+}  /* Free_list */
+
+
+int  Is_empty(struct list_node_s* head_p) {
+    if (head_p == NULL)
+        return 1;
+    else
+        return 0;
+}  /* Is_empty */
+
+
 /* Member function */
 int Member(int value, struct list_node_s *head_p) {
+//    printf("Performing member operation\n");
     struct list_node_s *curr_p = head_p;
     while (curr_p != NULL && curr_p->data < value)
         curr_p = curr_p->next;
@@ -138,6 +180,7 @@ int Member(int value, struct list_node_s *head_p) {
 
 /* Insert function */
 int Insert(int value, struct list_node_s **head_pp) {
+//    printf("Performing insert operation\n");
     struct list_node_s *curr_p = *head_pp;
     struct list_node_s *pred_p = NULL;
     struct list_node_s *temp_p;
@@ -151,6 +194,7 @@ int Insert(int value, struct list_node_s **head_pp) {
         temp_p = malloc(sizeof(struct list_node_s));
         temp_p->data = value;
         temp_p->next = curr_p;
+//        printf("%d is in\n", value);
         if (pred_p == NULL) /* New first node */
             *head_pp = temp_p;
         else
@@ -164,6 +208,7 @@ int Insert(int value, struct list_node_s **head_pp) {
 
 /* Delete function */
 int Delete(int value, struct list_node_s **head_pp) {
+//    printf("Performing delete operation \n");
     struct list_node_s *curr_p = *head_pp;
     struct list_node_s *pred_p = NULL;
 

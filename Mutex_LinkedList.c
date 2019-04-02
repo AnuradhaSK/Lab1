@@ -17,7 +17,6 @@ float m_delete_fraction = 0.0; /* Fraction of delete operation */
 int total = 0, member_count_total = 0, insert_count_total = 0, delete_count_total = 0;
 int m_member = 0, m_insert = 0, m_delete = 0;
 
-struct timeval time_begin, time_end;
 struct list_node_s *head_p = NULL;  /* start with empty list */
 
 int thread_count = 0;
@@ -84,8 +83,14 @@ double execution() {
     thread_handles = malloc(thread_count * sizeof(pthread_t));
 
     /* Create linked list*/
-    for (int i = 0; i < n; i++) {
-        Insert(rand() % MAX_VALUE, &head_p);
+    int count = 0;
+    while (count < n) {
+//        int val =rand()%MAX_VALUE;
+//        printf("%d%s",val,"\n");
+        int status = Insert(rand()%MAX_VALUE, &head_p);
+        if(status == 1) {
+            count++;
+        }
     }
 
     m_member = m * m_member_fraction;
