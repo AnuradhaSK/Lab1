@@ -21,7 +21,8 @@ int member_remainder = 0, insert_remainder = 0, delete_remainder = 0;
 struct list_node_s *head_p = NULL;  /* start with empty list */
 
 int thread_count = 0;
-pthread_mutex_t mutex;
+
+pthread_rwlock_t rwlock;
 pthread_mutex_t count_mutex;
 
 /* Node definition */
@@ -121,23 +122,23 @@ void *thread_function(void *id) {
 
         if (ops == 0 && thread_member != 0) {
             printf("member operation \n");
-            pthread_mutex_lock(&mutex);
+            pthread_rwlock_rdlock(&rwlock);
             Member(random_value, head_p);
-            pthread_mutex_unlock(&mutex);
+            pthread_rwlock_unlock(&rwlock);
             thread_member--;
             thread_member_count++;
         } else if (ops == 1 && thread_insert != 0) {
             printf("insert operation \n");
-            pthread_mutex_lock(&mutex);
+            pthread_rwlock_wrlock(&rwlock);
             Insert(random_value, &head_p);
-            pthread_mutex_unlock(&mutex);
+            pthread_rwlock_unlock(&rwlock);
             thread_insert--;
             thread_insert_count++;
         } else if (ops == 2 && thread_delete != 0) {
             printf("delete operation \n");
-            pthread_mutex_lock(&mutex);
+            pthread_rwlock_wrlock(&rwlock);
             Delete(random_value, &head_p);
-            pthread_mutex_unlock(&mutex);
+            pthread_rwlock_unlock(&rwlock);
             thread_delete--;
             thread_delete_count++;
         }
@@ -177,8 +178,8 @@ double execution() {
     insert_remainder = m_insert % thread_count;
     delete_remainder = m_delete % thread_count;
 
-    pthread_mutex_init(&mutex, NULL);
     pthread_mutex_init(&count_mutex, NULL);
+    pthread_rwlock_init(&rwlock, NULL);
 
     /* Start clock */
     clock_t start_time = clock();
@@ -202,7 +203,7 @@ double execution() {
     printf("Time spent: %.5f secs\n", cpu_time_used);
 
     Free_list(&head_p);
-    pthread_mutex_destroy(&mutex);
+    pthread_rwlock_destroy(&rwlock);
     pthread_mutex_destroy(&count_mutex);
     free(thread_handles);
 

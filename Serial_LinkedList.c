@@ -29,9 +29,9 @@ void vaildateInput(int argc, char *argv[]);
 
 double execution();
 
-void Free_list(struct list_node_s** head_pp);
+void Free_list(struct list_node_s **head_pp);
 
-int  Is_empty(struct list_node_s* head_p);
+int Is_empty(struct list_node_s *head_p);
 
 int main(int argc, char *argv[]) {
 
@@ -59,8 +59,8 @@ double execution() {
     while (count < n) {
 //        int val =rand()%MAX_VALUE;
 //        printf("%d%s",val,"\n");
-        int status = Insert(rand()%MAX_VALUE, &head_p);
-        if(status == 1) {
+
+        if (Insert(rand() % MAX_VALUE, &head_p) == 1) {
             count++;
         }
     }
@@ -135,9 +135,9 @@ void vaildateInput(int argc, char *argv[]) {
 
 }
 
-void Free_list(struct list_node_s** head_pp) {
-    struct list_node_s* curr_p;
-    struct list_node_s* succ_p;
+void Free_list(struct list_node_s **head_pp) {
+    struct list_node_s *curr_p;
+    struct list_node_s *succ_p;
 
     if (Is_empty(*head_pp)) return;
     curr_p = *head_pp;
@@ -154,7 +154,7 @@ void Free_list(struct list_node_s** head_pp) {
 }  /* Free_list */
 
 
-int  Is_empty(struct list_node_s* head_p) {
+int Is_empty(struct list_node_s *head_p) {
     if (head_p == NULL)
         return 1;
     else
