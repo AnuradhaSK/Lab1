@@ -14,7 +14,9 @@ float m_member_fraction = 0.0; /* Fraction of member operation */
 float m_insert_fraction = 0.0; /* Fraction of insert operation */
 float m_delete_fraction = 0.0; /* Fraction of delete operation */
 
-int total = 0, member_count_total = 0, insert_count_total = 0, delete_count_total = 0;
+int number_of_repeats = 0;
+
+//int total = 0, member_count_total = 0, insert_count_total = 0, delete_count_total = 0;
 int m_member = 0, m_insert = 0, m_delete = 0;
 int member_remainder = 0, insert_remainder = 0, delete_remainder = 0;
 
@@ -23,7 +25,7 @@ struct list_node_s *head_p = NULL;  /* start with empty list */
 int thread_count = 0;
 
 pthread_rwlock_t rwlock;
-pthread_mutex_t count_mutex;
+//pthread_mutex_t count_mutex;
 
 /* Node definition */
 struct list_node_s {
@@ -41,7 +43,7 @@ void vaildateInput(int argc, char *argv[]);
 
 double execution();
 
-void *thread_function(void *rank);
+void *thread_function(void *id);
 
 void Free_list(struct list_node_s **head_pp);
 
@@ -54,17 +56,17 @@ int main(int argc, char *argv[]) {
     float timeSum = 0.0;
     float timeSquaredSum = 0.0;
 
-    for (int j = 0; j < 2; j++) {
+    for (int j = 0; j < number_of_repeats; j++) {
         float elapsedTime = execution();
         timeSum += elapsedTime;
         timeSquaredSum += elapsedTime * elapsedTime;
-        member_count_total = 0;
-        insert_count_total = 0;
-        delete_count_total = 0;
+//        member_count_total = 0;
+//        insert_count_total = 0;
+//        delete_count_total = 0;
     }
 
-    float mean = timeSum / 2;
-    float std = sqrt((timeSquaredSum / 2) - mean * mean);
+    float mean = timeSum / number_of_repeats;
+    float std = sqrt((timeSquaredSum / number_of_repeats) - mean * mean);
     printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
 
 }
@@ -73,7 +75,8 @@ void *thread_function(void *id) {
     long rank = (long) id;
 
     int thread_member = 0, thread_insert = 0, thread_delete = 0;
-    int thread_total = 0, thread_member_count = 0, thread_insert_count = 0, thread_delete_count = 0;
+    int thread_total = 0;
+//    int thread_member_count = 0, thread_insert_count = 0, thread_delete_count = 0;
 
     int ops_per_thread = m / thread_count;
 
@@ -108,47 +111,49 @@ void *thread_function(void *id) {
     } else {
         thread_delete = ops_per_thread - (thread_member + thread_insert);
     }
-    printf("Thread id ------------------------> %d \n", rank);
-    printf("Thread member count %d\n", thread_member);
-    printf("Thread insert count %d\n", thread_insert);
-    printf("Thread delete count %d\n", thread_delete);
+//    printf("Thread id ------------------------> %d \n", rank);
+//    printf("Thread member count %d\n", thread_member);
+//    printf("Thread insert count %d\n", thread_insert);
+//    printf("Thread delete count %d\n", thread_delete);
 
 
     /* Execute m operations */
     while (thread_total < ops_per_thread) {
         int ops = rand() % 3;
-        printf("%d ----> %d \n", ops, rank);
+//        printf("%d ----> %d \n", ops, rank);
         int random_value = rand() % MAX_VALUE;
 
         if (ops == 0 && thread_member != 0) {
-            printf("member operation \n");
+//            printf("member operation \n");
             pthread_rwlock_rdlock(&rwlock);
             Member(random_value, head_p);
             pthread_rwlock_unlock(&rwlock);
             thread_member--;
-            thread_member_count++;
+//            thread_member_count++;
+            thread_total++;
         } else if (ops == 1 && thread_insert != 0) {
-            printf("insert operation \n");
+//            printf("insert operation \n");
             pthread_rwlock_wrlock(&rwlock);
             Insert(random_value, &head_p);
             pthread_rwlock_unlock(&rwlock);
             thread_insert--;
-            thread_insert_count++;
+//            thread_insert_count++;
+            thread_total++;
         } else if (ops == 2 && thread_delete != 0) {
-            printf("delete operation \n");
+//            printf("delete operation \n");
             pthread_rwlock_wrlock(&rwlock);
             Delete(random_value, &head_p);
             pthread_rwlock_unlock(&rwlock);
             thread_delete--;
-            thread_delete_count++;
+//            thread_delete_count++;
+            thread_total++;
         }
-        thread_total = thread_member_count + thread_insert_count + thread_delete_count;
     }
-    pthread_mutex_lock(&count_mutex);
-    member_count_total += thread_member_count;
-    insert_count_total += thread_insert_count;
-    delete_count_total += thread_delete_count;
-    pthread_mutex_unlock(&count_mutex);
+//    pthread_mutex_lock(&count_mutex);
+//    member_count_total += thread_member_count;
+//    insert_count_total += thread_insert_count;
+//    delete_count_total += thread_delete_count;
+//    pthread_mutex_unlock(&count_mutex);
 
     return NULL;
 }
@@ -178,7 +183,7 @@ double execution() {
     insert_remainder = m_insert % thread_count;
     delete_remainder = m_delete % thread_count;
 
-    pthread_mutex_init(&count_mutex, NULL);
+//    pthread_mutex_init(&count_mutex, NULL);
     pthread_rwlock_init(&rwlock, NULL);
 
     /* Start clock */
@@ -193,9 +198,9 @@ double execution() {
         pthread_join(thread_handles[thread], NULL);
     }
 
-    printf("member count %d\n", member_count_total);
-    printf("insert count %d\n", insert_count_total);
-    printf("delete count %d\n", delete_count_total);
+//    printf("member count %d\n", member_count_total);
+//    printf("insert count %d\n", insert_count_total);
+//    printf("delete count %d\n", delete_count_total);
     /* Stop clock*/
     clock_t end_time = clock();
 
@@ -204,7 +209,7 @@ double execution() {
 
     Free_list(&head_p);
     pthread_rwlock_destroy(&rwlock);
-    pthread_mutex_destroy(&count_mutex);
+//    pthread_mutex_destroy(&count_mutex);
     free(thread_handles);
 
     return cpu_time_used;
@@ -212,38 +217,53 @@ double execution() {
 
 void vaildateInput(int argc, char *argv[]) {
 
-    if (argc != 7) {
+    if (argc != 8) {
         fprintf(stderr,
-                "Usage: ./<executable name> <thread_count> <n> <m> <m_member_fraction> <m_insert_fraction> <m_delete_fraction>\n");
+                "Usage: ./<executable name> <n> <m> <m_member_fraction> <m_insert_fraction> <m_delete_fraction> <repetition sample size> <thread_count>\n");
         exit(0);
     }
 
-    thread_count = (int) strtol(argv[1], NULL, 10);
-    if (thread_count <= 0) {
+    n = (int) strtol(argv[1], NULL, 10);
+    m = (int) strtol(argv[2], NULL, 10);
+
+    m_member_fraction = (float) atof(argv[3]);
+    m_insert_fraction = (float) atof(argv[4]);
+    m_delete_fraction = (float) atof(argv[5]);
+
+    number_of_repeats = (int) strtol(argv[6], NULL, 10);
+
+    thread_count = (int) strtol(argv[7], NULL, 10);
+
+    if (n < 0) {
+        fprintf(stderr, "n: number of nodes in linked list -> should be a positive value.\n");
+        exit(0);
+    } else if (m < 0) {
+        fprintf(stderr, "m: number of operations on the linked list -> should be a positive value.\n");
+        exit(0);
+    } else if (m_member_fraction < 0) {
+        fprintf(stderr,
+                "m_member_fraction: fraction of operations for member function: should be a value between 0-1.\n");
+        exit(0);
+    } else if (m_insert_fraction < 0) {
+        fprintf(stderr,
+                "m_insert_fraction: fraction of operations for insert function: should be a value between 0-1.\n");
+        exit(0);
+    } else if (m_delete_fraction < 0) {
+        fprintf(stderr,
+                "m_delete_fraction: fraction of operations for delete function: should be a value between 0-1.\n");
+        exit(0);
+    } else if (m_member_fraction + m_insert_fraction + m_delete_fraction != 1) {
+        fprintf(stderr, "The sum of three fractions should be 1.\n");
+        exit(0);
+    } else if (number_of_repeats < 0) {
+        fprintf(stderr, "The repetition sample count should be a positive value .\n");
+        exit(0);
+    } else if (thread_count <= 0) {
         fprintf(stderr, "Number of threads should be greater than 0");
         exit(0);
     }
-
-    n = (int) strtol(argv[2], NULL, 10);
-    m = (int) strtol(argv[3], NULL, 10);
-
-    m_member_fraction = (float) atof(argv[4]);
-    m_insert_fraction = (float) atof(argv[5]);
-    m_delete_fraction = (float) atof(argv[6]);
-
-    if (n < 0 || m < 0 || m_member_fraction < 0 || m_insert_fraction < 0 || m_delete_fraction < 0 ||
-        m_member_fraction + m_insert_fraction + m_delete_fraction != 1) {
-        fprintf(stderr,
-                "error in input values.\n"
-                "n: number of nodes in linked list -> should be a positive value.\n"
-                "m: number of operations on the linked list -> should be a positive value.\n"
-                "m_member_fraction: fraction of operations for member function: should be a value between 0-1.\n"
-                "m_insert_fraction: fraction of operations for insert function: should be a value between 0-1.\n"
-                "m_delete_fraction: fraction of operations for delete function: should be a value between 0-1.\n");
-        exit(0);
-    }
-
 }
+
 
 void Free_list(struct list_node_s **head_pp) {
     struct list_node_s *curr_p;

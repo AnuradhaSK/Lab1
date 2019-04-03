@@ -13,6 +13,8 @@ float m_member_fraction = 0.0; /* Fraction of member operation */
 float m_insert_fraction = 0.0; /* Fraction of insert operation */
 float m_delete_fraction = 0.0; /* Fraction of delete operation */
 
+int number_of_repeats = 0;
+
 /* Node definition */
 struct list_node_s {
     int data;
@@ -38,14 +40,14 @@ int main(int argc, char *argv[]) {
     float timeSum = 0.0;
     float timeSquaredSum = 0.0;
     vaildateInput(argc, argv);
-    for (int j = 0; j < 100; j++) {
+    for (int j = 0; j < number_of_repeats; j++) {
         float elapsedTime = execution();
         timeSum += elapsedTime;
         timeSquaredSum += elapsedTime * elapsedTime;
     }
 
-    float mean = timeSum / 100;
-    float std = sqrt((timeSquaredSum / 100) - mean * mean);
+    float mean = timeSum / number_of_repeats;
+    float std = sqrt((timeSquaredSum / number_of_repeats) - mean * mean);
     printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
 
 }
@@ -84,17 +86,19 @@ double execution() {
         if (random_selection == 0 && member_count < m_member) {
             Member(random_value, head_p);
             member_count++;
+            total++;
 //            printf("member count %d \n",member_count);
         } else if (random_selection == 1 && insert_count < m_insert) {
             Insert(random_value, &head_p);
             insert_count++;
+            total++;
 //            printf("insert count %d \n",insert_count);
         } else if (random_selection == 2 && delete_count < m_delete) {
             Delete(random_value, &head_p);
             delete_count++;
+            total++;
 //            printf("delete count %d \n", delete_count);
         }
-        total = member_count + insert_count + delete_count;
     }
     /* Stop clock*/
     clock_t end_time = clock();
@@ -108,9 +112,9 @@ double execution() {
 
 void vaildateInput(int argc, char *argv[]) {
 
-    if (argc != 6) {
+    if (argc != 7) {
         fprintf(stderr,
-                "Usage: ./<executable_name> <n> <m> <m_member_fraction> <m_insert_fraction> <m_delete_fraction>\n");
+                "Usage: ./<executable_name> <n> <m> <m_member_fraction> <m_insert_fraction> <m_delete_fraction> <repetition sample size>\n");
         exit(0);
     }
 
@@ -121,15 +125,31 @@ void vaildateInput(int argc, char *argv[]) {
     m_insert_fraction = (float) atof(argv[4]);
     m_delete_fraction = (float) atof(argv[5]);
 
-    if (n < 0 || m < 0 || m_member_fraction < 0 || m_insert_fraction < 0 || m_delete_fraction < 0 ||
-        m_member_fraction + m_insert_fraction + m_delete_fraction != 1) {
+    number_of_repeats = (int) strtol(argv[6], NULL, 10);
+
+    if (n < 0) {
+        fprintf(stderr, "n: number of nodes in linked list -> should be a positive value.\n");
+        exit(0);
+    } else if (m < 0) {
+        fprintf(stderr, "m: number of operations on the linked list -> should be a positive value.\n");
+        exit(0);
+    } else if (m_member_fraction < 0) {
         fprintf(stderr,
-                "error in input values.\n"
-                "n: number of nodes in linked list -> should be a positive value.\n"
-                "m: number of operations on the linked list -> should be a positive value.\n"
-                "m_member_fraction: fraction of operations for member function: should be a value between 0-1.\n"
-                "m_insert_fraction: fraction of operations for insert function: should be a value between 0-1.\n"
+                "m_member_fraction: fraction of operations for member function: should be a value between 0-1.\n");
+        exit(0);
+    } else if (m_insert_fraction < 0) {
+        fprintf(stderr,
+                "m_insert_fraction: fraction of operations for insert function: should be a value between 0-1.\n");
+        exit(0);
+    } else if (m_delete_fraction < 0) {
+        fprintf(stderr,
                 "m_delete_fraction: fraction of operations for delete function: should be a value between 0-1.\n");
+        exit(0);
+    } else if (m_member_fraction + m_insert_fraction + m_delete_fraction != 1) {
+        fprintf(stderr, "The sum of three fractions should be 1.\n");
+        exit(0);
+    } else if (number_of_repeats < 0) {
+        fprintf(stderr, "The repetition sample count should be a positive value .\n");
         exit(0);
     }
 
