@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
     float timeSum = 0.0;
     float timeSquaredSum = 0.0;
     vaildateInput(argc, argv);
+
     for (int j = 0; j < number_of_repeats; j++) {
         float elapsedTime = execution();
         timeSum += elapsedTime;
@@ -47,7 +48,37 @@ int main(int argc, char *argv[]) {
     }
 
     float mean = timeSum / number_of_repeats;
-    float std = sqrt((timeSquaredSum / number_of_repeats) - mean * mean);
+    float std = sqrt((timeSquaredSum / number_of_repeats) - (mean * mean));
+    printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
+
+    printf("%f\n",((100 * 1.96 * std) / (5 * mean)));
+
+    int x = pow(((100 * 1.96 * std )/ (5 * mean)),2);
+    if (x<1){
+        x=x+1;
+    }
+    int times = 1;
+    while (number_of_repeats - x < 0 || number_of_repeats - x > 1) {
+        timeSum = 0.0;
+        timeSquaredSum = 0.0;
+        number_of_repeats = x;
+        printf("x---->%d\n",x);
+        times++;
+        printf("Times %d\n", times);
+        for (int j = 0; j < number_of_repeats; j++) {
+            float elapsedTime = execution();
+            timeSum += elapsedTime;
+            timeSquaredSum += elapsedTime * elapsedTime;
+        }
+        mean = timeSum / number_of_repeats;
+        std = sqrt((timeSquaredSum / number_of_repeats) - (mean * mean));
+        x = pow(((100 * 1.96 * std )/ (5 * mean)),2);
+        if (x<1){
+            x=x+1;
+        }
+        printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
+    }
+
     printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
 
 }
