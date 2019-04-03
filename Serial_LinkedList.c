@@ -46,14 +46,11 @@ int Is_empty(struct list_node_s *head_p);
 int main(int argc, char *argv[]) {
 
     vaildateInput(argc, argv);
-    while (0 > number_of_repeats - x || 2 < number_of_repeats - x) {
-        printf ("Times %d \n", times);
+    while (0 > number_of_repeats - x || 5 < number_of_repeats - x) {
+        printf("Times %d \n", times);
 
-        if (times > 1 ){
+        if (times > 0) {
             number_of_repeats = x;
-            if (x == 0){
-                number_of_repeats++;
-            }
         }
         timeSum = 0.0;
         timeSquaredSum = 0.0;
@@ -68,7 +65,10 @@ int main(int argc, char *argv[]) {
         std = sqrt((timeSquaredSum / number_of_repeats) - (mean * mean));
         printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
 
-        x = mean;
+        x = pow(((100 * 1.96 * std) / (5 * mean)), 2);
+        if (x == 0) {
+            x++;
+        }
         printf("x----------------%d\n", x);
         times++;
     }
