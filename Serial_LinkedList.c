@@ -14,6 +14,14 @@ float m_insert_fraction = 0.0; /* Fraction of insert operation */
 float m_delete_fraction = 0.0; /* Fraction of delete operation */
 
 int number_of_repeats = 0;
+int times = 0;
+int x = 0;
+
+float timeSum = 0.0;
+float timeSquaredSum = 0.0;
+
+float mean = 0.0;
+float std = 0.0;
 
 /* Node definition */
 struct list_node_s {
@@ -37,17 +45,33 @@ int Is_empty(struct list_node_s *head_p);
 
 int main(int argc, char *argv[]) {
 
-    float timeSum = 0.0;
-    float timeSquaredSum = 0.0;
     vaildateInput(argc, argv);
-    for (int j = 0; j < number_of_repeats; j++) {
-        float elapsedTime = execution();
-        timeSum += elapsedTime;
-        timeSquaredSum += elapsedTime * elapsedTime;
-    }
+    while (0 > number_of_repeats - x || 2 < number_of_repeats - x) {
+        printf ("Times %d \n", times);
 
-    float mean = timeSum / number_of_repeats;
-    float std = sqrt((timeSquaredSum / number_of_repeats) - mean * mean);
+        if (times > 1 ){
+            number_of_repeats = x;
+            if (x == 0){
+                number_of_repeats++;
+            }
+        }
+        timeSum = 0.0;
+        timeSquaredSum = 0.0;
+
+        for (int j = 0; j < number_of_repeats; j++) {
+            float elapsedTime = execution();
+            timeSum += elapsedTime;
+            timeSquaredSum += elapsedTime * elapsedTime;
+        }
+
+        mean = timeSum / number_of_repeats;
+        std = sqrt((timeSquaredSum / number_of_repeats) - (mean * mean));
+        printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
+
+        x = mean;
+        printf("x----------------%d\n", x);
+        times++;
+    }
     printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
 
 }
