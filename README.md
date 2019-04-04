@@ -6,7 +6,7 @@ complie:
 gcc -g -Wall -o serial_linked_list Serial_LinkedList.c -lm
 
 run:
-./serial_linked_list 1000 10000 0.99 0.005 0.005 10
+./serial_linked_list 1000 10000 0.99 0.005 0.005 20
 
 Mutex:
 
@@ -14,15 +14,15 @@ complie:
 gcc -g -Wall -o mutex_linked_list Mutex_LinkedList.c -lm -lpthread
 
 run:
-./mutex_linked_list 1000 10000 0.99 0.005 0.005 10 10 2
+./mutex_linked_list 1000 10000 0.99 0.005 0.005 20 2
 
 RW:
 
 complie:
-gcc -g -Wall -o rwl_linked_list Mutex_LinkedList.c -lm -lpthread
+gcc -g -Wall -o rwl_linked_list rwl_LinkedList.c -lm -lpthread
 
 run:
-./rwl_linked_list 1000 10000 0.99 0.005 0.005 10 10 2
+./rwl_linked_list 1000 10000 0.99 0.005 0.005 20 2
 
 
 

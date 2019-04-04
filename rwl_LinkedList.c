@@ -14,17 +14,16 @@ float m_member_fraction = 0.0; /* Fraction of member operation */
 float m_insert_fraction = 0.0; /* Fraction of insert operation */
 float m_delete_fraction = 0.0; /* Fraction of delete operation */
 
-int number_of_repeats = 0;
-int times = 0;
-int x = 0;
+int number_of_repeats = 0; /* Number of repetitions for the number of given operations*/
+int times = 0; /* Number of times to do repeats*/
+int sample_size = 0; /* ((100*z*s)/(r*x_bar))^2 */
 
 float timeSum = 0.0;
 float timeSquaredSum = 0.0;
 
-float mean = 0.0;
-float std = 0.0;
+float mean = 0.0; /* Mean */
+float std = 0.0; /* Standard deviation */
 
-//int total = 0, member_count_total = 0, insert_count_total = 0, delete_count_total = 0;
 int m_member = 0, m_insert = 0, m_delete = 0;
 int member_remainder = 0, insert_remainder = 0, delete_remainder = 0;
 
@@ -33,7 +32,6 @@ struct list_node_s *head_p = NULL;  /* start with empty list */
 int thread_count = 0;
 
 pthread_rwlock_t rwlock;
-//pthread_mutex_t count_mutex;
 
 /* Node definition */
 struct list_node_s {
@@ -60,36 +58,34 @@ int Is_empty(struct list_node_s *head_p);
 int main(int argc, char *argv[]) {
 
     vaildateInput(argc, argv);
-
-    while (0 > number_of_repeats - x || 5 < number_of_repeats - x) {
-        printf("Times %d \n", times);
+    /* Repeat to get the mean and std for a sufficient sample size */
+    while (0 > number_of_repeats - sample_size || 5 < number_of_repeats - sample_size || times == 0) {
 
         if (times > 0) {
-            number_of_repeats = x;
+            number_of_repeats = sample_size;
         }
         timeSum = 0.0;
         timeSquaredSum = 0.0;
 
+        /* Repeat the number of m operations for the selected sufficient times */
         for (int j = 0; j < number_of_repeats; j++) {
             float elapsedTime = execution();
             timeSum += elapsedTime;
             timeSquaredSum += elapsedTime * elapsedTime;
-//        member_count_total = 0;
-//        insert_count_total = 0;
-//        delete_count_total = 0;
         }
 
         mean = timeSum / number_of_repeats;
         std = sqrt((timeSquaredSum / number_of_repeats) - (mean * mean));
         printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
 
-        x = pow(((100 * 1.96 * std) / (5 * mean)), 2);
-        if (x == 0 || x == 1) {
-            x = 2;
+        sample_size = pow(((100 * 1.96 * std) / (5 * mean)), 2);
+        if (sample_size == 0 || sample_size == 1) {
+            sample_size = 2;
         }
-        printf("x----------------%d\n", x);
+        printf("sample size given from formula----------------%d\n", sample_size);
         times++;
     }
+    printf("Finished!!\n");
     printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
 
 }
@@ -97,11 +93,9 @@ int main(int argc, char *argv[]) {
 void *thread_function(void *id) {
     long rank = (long) id;
 
-    int thread_member = 0, thread_insert = 0, thread_delete = 0;
-    int thread_total = 0;
-//    int thread_member_count = 0, thread_insert_count = 0, thread_delete_count = 0;
-
-    int ops_per_thread = m / thread_count;
+    int thread_member = 0, thread_insert = 0, thread_delete = 0; /* Number of member, insert and delete operations per thread */
+    int thread_total = 0;  /* Count for total count per thread */
+    int ops_per_thread = m / thread_count; /* Total operations per thread */
 
     /* Calculate number of member operations per thread */
     if (member_remainder == 0) {
@@ -134,50 +128,32 @@ void *thread_function(void *id) {
     } else {
         thread_delete = ops_per_thread - (thread_member + thread_insert);
     }
-//    printf("Thread id ------------------------> %d \n", rank);
-//    printf("Thread member count %d\n", thread_member);
-//    printf("Thread insert count %d\n", thread_insert);
-//    printf("Thread delete count %d\n", thread_delete);
-
 
     /* Execute m operations */
     while (thread_total < ops_per_thread) {
         int ops = rand() % 3;
-//        printf("%d ----> %d \n", ops, rank);
         int random_value = rand() % MAX_VALUE;
 
         if (ops == 0 && thread_member != 0) {
-//            printf("member operation \n");
             pthread_rwlock_rdlock(&rwlock);
             Member(random_value, head_p);
             pthread_rwlock_unlock(&rwlock);
             thread_member--;
-//            thread_member_count++;
             thread_total++;
         } else if (ops == 1 && thread_insert != 0) {
-//            printf("insert operation \n");
             pthread_rwlock_wrlock(&rwlock);
             Insert(random_value, &head_p);
             pthread_rwlock_unlock(&rwlock);
             thread_insert--;
-//            thread_insert_count++;
             thread_total++;
         } else if (ops == 2 && thread_delete != 0) {
-//            printf("delete operation \n");
             pthread_rwlock_wrlock(&rwlock);
             Delete(random_value, &head_p);
             pthread_rwlock_unlock(&rwlock);
             thread_delete--;
-//            thread_delete_count++;
             thread_total++;
         }
     }
-//    pthread_mutex_lock(&count_mutex);
-//    member_count_total += thread_member_count;
-//    insert_count_total += thread_insert_count;
-//    delete_count_total += thread_delete_count;
-//    pthread_mutex_unlock(&count_mutex);
-
     return NULL;
 }
 
@@ -190,8 +166,6 @@ double execution() {
     /* Create linked list*/
     int count = 0;
     while (count < n) {
-//        int val =rand()%MAX_VALUE;
-//        printf("%d%s",val,"\n");
         if (Insert(rand() % MAX_VALUE, &head_p) == 1) {
             count++;
         }
@@ -206,7 +180,6 @@ double execution() {
     insert_remainder = m_insert % thread_count;
     delete_remainder = m_delete % thread_count;
 
-//    pthread_mutex_init(&count_mutex, NULL);
     pthread_rwlock_init(&rwlock, NULL);
 
     /* Start clock */
@@ -221,9 +194,6 @@ double execution() {
         pthread_join(thread_handles[thread], NULL);
     }
 
-//    printf("member count %d\n", member_count_total);
-//    printf("insert count %d\n", insert_count_total);
-//    printf("delete count %d\n", delete_count_total);
     /* Stop clock*/
     clock_t end_time = clock();
 
@@ -232,7 +202,6 @@ double execution() {
 
     Free_list(&head_p);
     pthread_rwlock_destroy(&rwlock);
-//    pthread_mutex_destroy(&count_mutex);
     free(thread_handles);
 
     return cpu_time_used;
@@ -287,7 +256,7 @@ void vaildateInput(int argc, char *argv[]) {
     }
 }
 
-
+/* Free_list */
 void Free_list(struct list_node_s **head_pp) {
     struct list_node_s *curr_p;
     struct list_node_s *succ_p;
@@ -296,23 +265,21 @@ void Free_list(struct list_node_s **head_pp) {
     curr_p = *head_pp;
     succ_p = curr_p->next;
     while (succ_p != NULL) {
-//        printf("Freeing %d\n", curr_p->data);
         free(curr_p);
         curr_p = succ_p;
         succ_p = curr_p->next;
     }
-//    printf("Freeing %d\n", curr_p->data);
     free(curr_p);
     *head_pp = NULL;
-}  /* Free_list */
+}
 
-
+/* Is_empty */
 int Is_empty(struct list_node_s *head_p) {
     if (head_p == NULL)
         return 1;
     else
         return 0;
-}  /* Is_empty */
+}
 
 
 /* Member function */
@@ -322,10 +289,8 @@ int Member(int value, struct list_node_s *head_p) {
         curr_p = curr_p->next;
 
     if (curr_p == NULL || curr_p->data > value) {
-//        printf("%d is not in the list\n", value);
         return 0;
     } else {
-//        printf("%d is in the list\n", value);
         return 1;
     }
 }
@@ -351,7 +316,6 @@ int Insert(int value, struct list_node_s **head_pp) {
             pred_p->next = temp_p;
         return 1;
     } else { /* value already in list */
-//        printf("%d is already in the list\n", value);
         return 0;
     }
 }
@@ -370,16 +334,13 @@ int Delete(int value, struct list_node_s **head_pp) {
     if (curr_p != NULL && curr_p->data == value) {
         if (pred_p == NULL) { /* Deleting first node in list */
             *head_pp = curr_p->next;
-//            printf("Freeing %d\n", value);
             free(curr_p);
         } else {
             pred_p->next = curr_p->next;
-//            printf("Freeing %d\n", value);
             free(curr_p);
         }
         return 1;
     } else { /* Value is not in list */
-//        printf("%d is not in the list\n", value);
         return 0;
     }
 }

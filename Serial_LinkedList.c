@@ -13,15 +13,15 @@ float m_member_fraction = 0.0; /* Fraction of member operation */
 float m_insert_fraction = 0.0; /* Fraction of insert operation */
 float m_delete_fraction = 0.0; /* Fraction of delete operation */
 
-int number_of_repeats = 0;
-int times = 0;
-int x = 0;
+int number_of_repeats = 0; /* Number of repetitions for the number of given operations*/
+int times = 0; /* Number of times to do repeats*/
+int sample_size = 0; /* ((100*z*s)/(r*x_bar))^2 */
 
 float timeSum = 0.0;
 float timeSquaredSum = 0.0;
 
-float mean = 0.0;
-float std = 0.0;
+float mean = 0.0; /* Mean */
+float std = 0.0; /* Standard deviation */
 
 /* Node definition */
 struct list_node_s {
@@ -45,16 +45,17 @@ int Is_empty(struct list_node_s *head_p);
 
 int main(int argc, char *argv[]) {
 
+    /* Validate inputs */
     vaildateInput(argc, argv);
-    while (0 > number_of_repeats - x || 5 < number_of_repeats - x) {
-        printf("Times %d \n", times);
+    /* Repeat to get the mean and std for a sufficient sample size */
+    while (0 > number_of_repeats - sample_size || 5 < number_of_repeats - sample_size) {
 
         if (times > 0) {
-            number_of_repeats = x;
+            number_of_repeats = sample_size;
         }
         timeSum = 0.0;
         timeSquaredSum = 0.0;
-
+        /* Repeat the number of m operations for the selected sufficient times */
         for (int j = 0; j < number_of_repeats; j++) {
             float elapsedTime = execution();
             timeSum += elapsedTime;
@@ -65,13 +66,14 @@ int main(int argc, char *argv[]) {
         std = sqrt((timeSquaredSum / number_of_repeats) - (mean * mean));
         printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
 
-        x = pow(((100 * 1.96 * std) / (5 * mean)), 2);
-        if (x == 0 || x == 1) {
-            x = 2;
+        sample_size = pow(((100 * 1.96 * std) / (5 * mean)), 2);
+        if (sample_size == 0 || sample_size == 1) {
+            sample_size = 2;
         }
-        printf("x----------------%d\n", x);
+        printf("sample size given from formula----------------%d\n", sample_size);
         times++;
     }
+    printf("Finished!!\n");
     printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
 
 }
@@ -83,16 +85,14 @@ double execution() {
     /* Create linked list*/
     int count = 0;
     while (count < n) {
-//        int val =rand()%MAX_VALUE;
-//        printf("%d%s",val,"\n");
 
         if (Insert(rand() % MAX_VALUE, &head_p) == 1) {
             count++;
         }
     }
 
-    int total = 0, member_count = 0, insert_count = 0, delete_count = 0;
-    int m_member = 0, m_insert = 0, m_delete = 0;
+    int total = 0, member_count = 0, insert_count = 0, delete_count = 0; /* Variables to count member, insert, delete ops*/
+    int m_member = 0, m_insert = 0, m_delete = 0; /* Allocated member, insert and delete operations*/
 
     m_member = m * m_member_fraction;
     m_insert = m * m_insert_fraction;
@@ -102,26 +102,21 @@ double execution() {
     clock_t start_time = clock();
 
     /* Execute m operations */
-//    printf("Selecting operations \n");
     while (total < m) {
         int random_value = rand() % MAX_VALUE;
         int random_selection = rand() % 3;
-//        printf("%d%s",random_selection,"\n");
         if (random_selection == 0 && member_count < m_member) {
             Member(random_value, head_p);
             member_count++;
             total++;
-//            printf("member count %d \n",member_count);
         } else if (random_selection == 1 && insert_count < m_insert) {
             Insert(random_value, &head_p);
             insert_count++;
             total++;
-//            printf("insert count %d \n",insert_count);
         } else if (random_selection == 2 && delete_count < m_delete) {
             Delete(random_value, &head_p);
             delete_count++;
             total++;
-//            printf("delete count %d \n", delete_count);
         }
     }
     /* Stop clock*/
@@ -179,6 +174,7 @@ void vaildateInput(int argc, char *argv[]) {
 
 }
 
+/* Free_list */
 void Free_list(struct list_node_s **head_pp) {
     struct list_node_s *curr_p;
     struct list_node_s *succ_p;
@@ -187,44 +183,38 @@ void Free_list(struct list_node_s **head_pp) {
     curr_p = *head_pp;
     succ_p = curr_p->next;
     while (succ_p != NULL) {
-//        printf("Freeing %d\n", curr_p->data);
         free(curr_p);
         curr_p = succ_p;
         succ_p = curr_p->next;
     }
-//    printf("Freeing %d\n", curr_p->data);
     free(curr_p);
     *head_pp = NULL;
-}  /* Free_list */
+}
 
-
+/* Is_empty */
 int Is_empty(struct list_node_s *head_p) {
     if (head_p == NULL)
         return 1;
     else
         return 0;
-}  /* Is_empty */
+}
 
 
 /* Member function */
 int Member(int value, struct list_node_s *head_p) {
-//    printf("Performing member operation\n");
     struct list_node_s *curr_p = head_p;
     while (curr_p != NULL && curr_p->data < value)
         curr_p = curr_p->next;
 
     if (curr_p == NULL || curr_p->data > value) {
-//        printf("%d is not in the list\n", value);
         return 0;
     } else {
-//        printf("%d is in the list\n", value);
         return 1;
     }
 }
 
 /* Insert function */
 int Insert(int value, struct list_node_s **head_pp) {
-//    printf("Performing insert operation\n");
     struct list_node_s *curr_p = *head_pp;
     struct list_node_s *pred_p = NULL;
     struct list_node_s *temp_p;
@@ -238,21 +228,18 @@ int Insert(int value, struct list_node_s **head_pp) {
         temp_p = malloc(sizeof(struct list_node_s));
         temp_p->data = value;
         temp_p->next = curr_p;
-//        printf("%d is in\n", value);
         if (pred_p == NULL) /* New first node */
             *head_pp = temp_p;
         else
             pred_p->next = temp_p;
         return 1;
     } else { /* value already in list */
-//        printf("%d is already in the list\n", value);
         return 0;
     }
 }
 
 /* Delete function */
 int Delete(int value, struct list_node_s **head_pp) {
-//    printf("Performing delete operation \n");
     struct list_node_s *curr_p = *head_pp;
     struct list_node_s *pred_p = NULL;
 
@@ -265,16 +252,13 @@ int Delete(int value, struct list_node_s **head_pp) {
     if (curr_p != NULL && curr_p->data == value) {
         if (pred_p == NULL) { /* Deleting first node in list */
             *head_pp = curr_p->next;
-//            printf("Freeing %d\n", value);
             free(curr_p);
         } else {
             pred_p->next = curr_p->next;
-//            printf("Freeing %d\n", value);
             free(curr_p);
         }
         return 1;
     } else { /* Value is not in list */
-//        printf("%d is not in the list\n", value);
         return 0;
     }
 }
