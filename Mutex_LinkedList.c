@@ -15,6 +15,14 @@ float m_insert_fraction = 0.0; /* Fraction of insert operation */
 float m_delete_fraction = 0.0; /* Fraction of delete operation */
 
 int number_of_repeats = 0;
+int times = 0;
+int x = 0;
+
+float timeSum = 0.0;
+float timeSquaredSum = 0.0;
+
+float mean = 0.0;
+float std = 0.0;
 
 //int total = 0, member_count_total = 0, insert_count_total = 0, delete_count_total = 0;
 int m_member = 0, m_insert = 0, m_delete = 0;
@@ -52,8 +60,14 @@ int main(int argc, char *argv[]) {
 
     vaildateInput(argc, argv);
 
-    float timeSum = 0.0;
-    float timeSquaredSum = 0.0;
+    while (0 > number_of_repeats - x || 5 < number_of_repeats - x) {
+        printf("Times %d \n", times);
+
+        if (times > 0) {
+            number_of_repeats = x;
+        }
+        timeSum = 0.0;
+        timeSquaredSum = 0.0;
 
     for (int j = 0; j < number_of_repeats; j++) {
         float elapsedTime = execution();
@@ -62,12 +76,21 @@ int main(int argc, char *argv[]) {
 //        member_count_total = 0;
 //        insert_count_total = 0;
 //        delete_count_total = 0;
+
     }
 
-    float mean = timeSum / number_of_repeats;
-    float std = sqrt((timeSquaredSum / number_of_repeats) - mean * mean);
-    printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
+        mean = timeSum / number_of_repeats;
+        std = sqrt((timeSquaredSum / number_of_repeats) - (mean * mean));
+        printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
 
+        x = pow(((100 * 1.96 * std) / (5 * mean)), 2);
+        if (x == 0 || x == 1) {
+            x = 2;
+        }
+        printf("x----------------%d\n", x);
+        times++;
+    }
+    printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
 }
 
 void *thread_function(void *id) {

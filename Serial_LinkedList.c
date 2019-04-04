@@ -66,8 +66,8 @@ int main(int argc, char *argv[]) {
         printf("Mean: %.5f secs\n Std: %.5f \n", mean, std);
 
         x = pow(((100 * 1.96 * std) / (5 * mean)), 2);
-        if (x == 0) {
-            x++;
+        if (x == 0 || x == 1) {
+            x = 2;
         }
         printf("x----------------%d\n", x);
         times++;
